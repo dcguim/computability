@@ -39,16 +39,40 @@
 
 (defun subt (x y)
  (if (zerop y)
-     ; (proj 3 1 (list (subt x (1- y)) x (1- y))) parece que o lisp evalua os
-     ; argumentos antes de realizar o operador proj pois ao rodar a função
-     ; subt com o código acima foi retornado:
-     ; "Control stack guard page temporarily disabled: proceed with caution"
-     ; mesmo que a função recursiva não fosse chamada, ou seja, early evaluation
-     x
-     (monus-1 (proj 3 0 (list (subt x (1- y)) x (1- y)))))))
+    "(proj 3 1 (list (subt x (1- y)) x (1- y))) parece que o lisp evalua os
+    argumentos antes de realizar o operador proj pois ao rodar a função
+    subt com o código acima foi retornado:
+    \"Control stack guard page temporarily disabled: proceed with caution\"
+    mesmo que a função recursiva não fosse chamada, ou seja, early evaluation
+    x
+   (monus-1 (proj 3 0 (list (subt x (1- y)) x (1- y)))))))"
 
 (defun expo (x n)
   (if (zerop n)
       (suc (zero x))
       (mult (proj 3 1 (list (expo x (1- n)) x (1- n)))
 	    (proj 3 0 (list (expo x (1- n)) x (1- n))))))
+
+(defun pos (key seq)
+  "Essa função não trata do caso onde a chave(key) fornecida
+  não se encontra na sequencia(seq)"
+  (let ((tam-no-key (length key)))
+     (subseq seq 
+       (+ (search key seq) tam-no-key))))
+
+(defun pre (key seq)
+  "Essa função espera que exista a chave na sequencia"
+  (subseq seq 0 (search key seq)))
+
+(defun zubst (new old seq)
+  (concatenate 'string (pre old seq) new (pos old seq)))
+
+(defun est-atual (c)
+  (concatenate 'string "Q" (pre "S" (pos "Q" c))))
+
+(defun simb-lido (c)
+  (concatenate 'string "S" 
+	       (pre "S" (pos "S" (pos "Q" c)))))
+
+(defun prox-est (q s m) 
+  (pre "," (pos (concatenate 'string "<" q "," s ",") m)))
