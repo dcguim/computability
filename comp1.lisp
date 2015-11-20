@@ -37,15 +37,15 @@
 (defun monus-1 (x)
   (monus-1-aux x x))
 
-(defun subt (x y)
- (if (zerop y)
-    "(proj 3 1 (list (subt x (1- y)) x (1- y))) parece que o lisp evalua os
-    argumentos antes de realizar o operador proj pois ao rodar a função
-    subt com o código acima foi retornado:
-    \"Control stack guard page temporarily disabled: proceed with caution\"
-    mesmo que a função recursiva não fosse chamada, ou seja, early evaluation
-    x
-   (monus-1 (proj 3 0 (list (subt x (1- y)) x (1- y)))))))"
+;;(defun subtract (x y)
+;; (if (zerop y)
+;;   "(proj 3 1 (list (subt x (1- y)) x (1- y))) parece que o lisp evalua os
+;;    argumentos antes de realizar o operador proj pois ao rodar a função
+;;    subt com o código acima foi retornado:
+;;    \"Control stack guard page temporarily disabled: proceed with caution\"
+;;    mesmo que a função recursiva não fosse chamada, ou seja, early evaluation
+;;    x
+;;   (monus-1 (proj 3 0 (list (subt x (1- y)) x (1- y)))))))"
 
 (defun expo (x n)
   (if (zerop n)
@@ -76,3 +76,47 @@
 
 (defun prox-est (q s m) 
   (pre "," (pos (concatenate 'string "<" q "," s ",") m)))
+
+(defun prox-simb (q s m)
+  (concatenate 'string "S" 
+	       (pre "," (pos "S" (pos (concatenate 'string "<" q "," s ",") m)))))
+
+(defun direcao (q s m)
+   (pre ">" (pos "," (pos "S" (pos (concatenate 'string "<" q "," s ",") m)))))
+
+(defun ult-simb (s)
+  (if (find #\S s :test #'equal)
+      (ult-simb (pos "S" s))
+      (concatenate 'string "S" s)))
+
+(defun simb-esq-lido (c) 
+       (ult-simb (pre "Q" c)))
+
+(defun ztep (m c)
+  (let* ((q (est-atual c)) 
+	 (s (simb-lido c))
+	 (ps (prox-simb q s m))
+	 (se (simb-esq-lido c))
+	 (pq (prox-est q s m)))
+    (if (equal (direcao q s m) "D")
+	(zubst (concatenate 'string ps pq) (concatenate 'string q s) c)
+	(zubst (concatenate 'string pq se ps) (concatenate 'string se q s) c)))) 
+
+(defun zteps (m c n)
+  (if (equal n 0)
+      c
+      (zteps m (ztep m c) (monus-1 n))))
+
+(defun est-final (m)
+  (pos "#" (pre "<" m)))
+
+(defun passos-parada (m c acc)
+  (let ((qf (est-final m))
+	(q (est-atual c)))
+	(if (equal q qf)
+	    acc
+	    (passos-parada m (ztep m c) (suc acc)))))
+
+(defun run (m x)
+  (let ((qx (concatenate 'string "QI" x)))
+    (zteps m qx (passos-parada m qx 0))))
